@@ -1,0 +1,48 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Kodni yuklab olish
+      uses: actions/checkout@v3
+
+    - name: Node.js sozlash
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Java JDK sozlash
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Capacitor o'rnatish va sozlash
+      run: |
+        mkdir www
+        cp index.html www/
+        npm init -y
+        npm install @capacitor/core @capacitor/cli @capacitor/android
+        npx cap init "Justin AI" "com.justin.ai" --web-dir=www
+        npx cap add android
+        npx cap sync android
+
+    - name: Android ruxsatnomalarini qo'shish (Mikrofon uchun)
+      run: |
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />' android/app/src/main/AndroidManifest.xml
+
+    - name: APK yig'ish (Build)
+      run: |
+        cd android && ./gradlew assembleDebug
+
+    - name: APK-ni yuklash uchun tayyorlash
+      uses: actions/upload-artifact@v4
+      with:
+        name: Justin-AI-APK
+        path: android/app/build/outputs/apk/debug/app-debug.apk
