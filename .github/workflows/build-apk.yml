@@ -1,66 +1,55 @@
-name: Build APK
+name: Build Android APK
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Kodni yuklab olish
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+    - name: Node.js sozlash
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+    - name: Java JDK sozlash
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '11' # Cordova uchun eng barqaror versiya
 
-      - name: Install and prepare Capacitor project
-        run: |
-          set -e
-          mkdir -p www
-          if [ -f index.html ]; then cp index.html www/; fi
-          if [ ! -f package.json ]; then npm init -y; fi
-          npm install --no-audit --no-fund @capacitor/core @capacitor/cli @capacitor/android
-          # initialize capacitor/android only if not present (avoid failing on re-run)
-          if [ ! -d android ]; then
-            npx cap init "Justin AI" "com.justin.ai" --web-dir=www || true
-            npx cap add android || true
-          fi
+    - name: Android SDK asboblarini sozlash
+      uses: android-actions/setup-android@v3
 
-      - name: Sync Capacitor Android
-        run: |
-          set -e
-          npx cap sync android
+    - name: Cordova-ni o'rnatish
+      run: npm install -g cordova
 
-      - name: Add Android permissions (microphone)
-        run: |
-          set -e
-          MANIFEST=android/app/src/main/AndroidManifest.xml
-          if [ -f "$MANIFEST" ]; then
-            sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />' "$MANIFEST"
-          else
-            echo "Warning: AndroidManifest.xml not found at $MANIFEST"
-          fi
+    - name: Ilovani yaratish va sozlash
+      run: |
+        cordova create justin com.justin.ai "Justin AI"
+        cd justin
+        cordova platform add android
+        
+    - name: HTML faylni ilova ichiga joylash
+        rm -rf justin/www/*
+        cp index.html justin/www/
 
-      - name: Make gradlew executable and build APK
-        run: |
-          set -e
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+    - name: Ovoz (Mikrofon) ruxsatnomalarini qo'shish
+      run: |
+        sed -i '/<\/widget>/i \    <config-file target="AndroidManifest.xml" parent="/*">\n        <uses-permission android:name="android.permission.RECORD_AUDIO" />\n        <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    </config-file>' justin/config.xml
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+    - name: APK-ni yig'ish (Build)
+      run: |
+        cd justin
+        cordova build android --debug
+
+    - name: Tayyor APK-ni yuklash uchun saqlash
+      uses: actions/upload-artifact@v4
+      with:
+        name: Justin-AI-APK
+        path: justin/platforms/android/app/build/outputs/apk/debug/app-debug.apk
