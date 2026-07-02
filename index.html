@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Justin AI - Yuklanmoqda...</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        #error-screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        #loader-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #7f8c8d;
+            font-size: 15px;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border-left-color: #3498db;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1-Oyna: Yuklanish jarayoni -->
+    <div id="loader-screen">
+        <div class="spinner"></div>
+        <h2>Ilovaga ulanmoqda...</h2>
+    </div>
+
+    <!-- 2-Oyna: Internet uzilgandagi xatolik -->
+    <div id="error-screen" class="container">
+        <svg class="icon" viewBox="0 0 24 24">
+            <path d="M23.64 8.19c-.45-.34-4.93-3.69-11.64-3.69-6.71 0-11.19 3.35-11.64 3.69L12 21.3l11.64-13.11z" fill-opacity=".3"/>
+            <path d="M1.98 8.24l9.46 10.66c.29.33.82.33 1.11 0l9.46-10.66C21.56 7.89 17.55 5 12 5c-5.55 0-9.56 2.89-10.02 3.24z" fill="#7f8c8d"/>
+            <line x1="1" y1="1" x2="23" y2="23" stroke="#e74c3c" stroke-width="2" />
+        </svg>
+        <h2>Internet barqaror emas</h2>
+        <p>Ilovadan foydalanish uchun tarmoq aloqasini tekshiring va qayta urinib ko'ring.</p>
+        <button class="btn" onclick="tryConnect()">QAYTA URUNING</button>
+    </div>
+
+    <script>
+        const targetUrl = "https://699d89374957c.myxvest2.ru/JUSTINAI/index.php";
+        const loaderScreen = document.getElementById('loader-screen');
+        const errorScreen = document.getElementById('error-screen');
+
+        // Ovozga (Mikrofonga) avtomatik ruxsat so'rash funksiyasi
+        function requestAudioPermission() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    console.log("Ovoz funksiyasiga ruxsat berildi.");
+                    // Ruxsat olingach, oqimni yopamiz (boshida shunchaki ruxsat olish uchun kerak)
+                    stream.getTracks().forEach(track => track.stop());
+                })
+                .catch(function(err) {
+                    console.log("Ovoz ruxsatnomasi rad etildi: ", err);
+                });
+            }
+        }
+
+        function tryConnect() {
+            errorScreen.style.display = "none";
+            loaderScreen.style.display = "flex";
+
+            if (navigator.onLine) {
+                // Internet bor bo'lsa, asosiy sahifaga yo'naltiramiz
+                window.location.replace(targetUrl);
+            } else {
+                setTimeout(() => {
+                    loaderScreen.style.display = "none";
+                    errorScreen.style.display = "block";
+                }, 800);
+            }
+        }
+
+        // Sahifa yuklanganda ham ovozni, ham internetni tekshiramiz
+        window.onload = function() {
+            requestAudioPermission(); // Ovoz so'rovini yuborish
+            tryConnect();            // Internetni tekshirish
+        };
+
+        window.addEventListener('offline', function() {
+            loaderScreen.style.display = "none";
+            errorScreen.style.display = "block";
+        });
+    </script>
+</body>
+</html>
